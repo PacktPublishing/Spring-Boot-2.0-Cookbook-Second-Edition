@@ -1,0 +1,145 @@
+buildscript {
+    ext {
+        springBootVersion = '2.0.0.M7'
+    }
+    repositories {
+        mavenCentral()
+        maven { url "https://repo.spring.io/snapshot" }
+        maven { url "https://repo.spring.io/milestone" }
+
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath 'se.transmode.gradle:gradle-docker:1.2'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'application'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'docker'
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Finchley.BUILD-SNAPSHOT'
+    }
+}
+
+group = 'com.example.bookpub'
+version = '0.0.1-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+mainClassName = 'com.example.bookpub.BookPubApplication'
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.spring.io/snapshot" }
+    maven { url "https://repo.spring.io/milestone" }
+    mavenLocal()
+
+}
+
+// Need to use Jetty instead of Tomcat
+//configurations {
+//    compile.exclude module: "spring-boot-starter-tomcat"
+//}
+
+applicationDefaultJvmArgs = [
+        "-Xms128m", "-Xmx256m"
+        //, "-Dmy.config.value=Gradle"
+        , "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+]
+
+springBoot {
+    buildInfo {
+        properties {
+            additional = [
+                    'description' : project.description
+            ]
+        }
+    }
+}
+
+bootJar {
+    classifier = 'exec'
+    baseName = 'bookpub'
+    launchScript {
+//        included = true
+        script = file('launch.script')
+        properties 'jvm_options' : applicationDefaultJvmArgs.join(' ')
+    }
+    excludeDevtools = false
+}
+
+task distDocker(type: Docker,
+        overwrite: true,
+        dependsOn: bootDistTar) {
+    group = 'docker'
+    description = "Packs the project's JVM application as a Docker image."
+
+    inputs.files project.bootJar
+    def installDir = "/" + project.bootDistTar.archiveName - ".${project.bootDistTar.extension}"
+
+    doFirst {
+        tag "aantono/springbootcookbook"
+        push false
+        exposePort 8080
+        exposePort 8443
+        addFile file("${System.properties['user.home']}/.keystore"), "/root/"
+        applicationName = project.applicationName
+        addFile project.bootJar.outputs.files.singleFile
+        //addFile project.bootDistTar.outputs.files.singleFile
+
+        def executableName = "/" + project.bootJar.outputs.files.singleFile.name
+        //entryPoint = ["$installDir/bin/${project.applicationName}"]
+        entryPoint = ["$executableName"]
+    }
+}
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-data-jpa")
+    compile("org.springframework.boot:spring-boot-starter-jdbc")
+    compile("org.springframework.boot:spring-boot-starter-web")
+    compile("org.springframework.boot:spring-boot-starter-data-rest")
+    // compile("org.springframework.boot:spring-boot-starter-jetty") // Need to use Jetty instead of Tomcat
+    compile("org.springframework.boot:spring-boot-starter-actuator")
+    compile("io.github.anand1st:sshd-shell-spring-boot-starter:3.2-SNAPSHOT")
+    compile("com.jayway.jsonpath:json-path:2.3.0")
+    //compile("de.codecentric:spring-boot-admin-starter-client:2.0.0")
+    compile("org.jolokia:jolokia-core:+")
+    compile project(':db-count-starter')
+    compile("commons-configuration:commons-configuration:1.10")
+    compile("commons-codec:commons-codec:1.6")
+    compile("commons-jxpath:commons-jxpath:1.3")
+    compile("commons-collections:commons-collections:3.2.1")
+    compile("io.micrometer:micrometer-registry-graphite:latest.release")
+    compile("org.springframework.boot:spring-boot-devtools")
+    //compile("org.springframework.cloud:spring-cloud-context")
+    //compile("org.springframework.cloud:spring-cloud-commons")
+    compile("org.springframework.cloud:spring-cloud-starter-consul-all")
+    compile("org.springframework.cloud:spring-cloud-starter-openfeign")
+    compile("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+    compile("org.springframework.cloud:spring-cloud-starter-netflix-hystrix")
+    runtime("com.h2database:h2")
+    runtime("mysql:mysql-connector-java")
+    testCompile("org.springframework.boot:spring-boot-starter-test")
+    testCompile("info.cukes:cucumber-spring:1.2.5")
+    testCompile("info.cukes:cucumber-java8:1.2.5")
+    testCompile("info.cukes:cucumber-junit:1.2.5")
+    testCompile('org.spockframework:spock-core:1.1-groovy-2.4-rc-2')
+    testCompile('org.spockframework:spock-spring:1.1-groovy-2.4-rc-2')
+
+    compileOnly "org.projectlombok:lombok:1.16.16"
+}
+
+eclipse {
+    classpath {
+         containers.remove('org.eclipse.jdt.launching.JRE_CONTAINER')
+         containers 'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8'
+    }
+}

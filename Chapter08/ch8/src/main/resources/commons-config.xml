@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<config>
+    <book>
+        <counter>
+            <delay>1000</delay>
+            <rate>${book.counter.delay}0</rate>
+        </counter>
+    </book>
+</config>

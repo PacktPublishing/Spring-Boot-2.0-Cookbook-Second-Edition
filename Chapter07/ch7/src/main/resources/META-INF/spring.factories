@@ -1,0 +1,5 @@
+# Environment Post Processors
+org.springframework.boot.env.EnvironmentPostProcessor=\
+com.example.bookpub.ApacheCommonsConfigurationEnvironmentPostProcessor
+org.springframework.boot.actuate.autoconfigure.web.ManagementContextConfiguration=\
+com.example.bookpub.ManagementConfiguration
