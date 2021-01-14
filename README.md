@@ -1,8 +1,3 @@
-## $5 Tech Unlocked 2021!
-[Buy and download this product for only $5 on PacktPub.com](https://www.packtpub.com/)
------
-*The $5 campaign         runs from __December 15th 2020__ to __January 13th 2021.__*
-
 # Spring Boot 2.0 Cookbook - Second Edition
 This is the code repository for [Spring Boot 2.0 Cookbook - Second Edition](https://www.packtpub.com/application-development/spring-boot-cookbook-second-edition?utm_source=github&utm_medium=repository&utm_campaign=9781787129825), published by [Packt](https://www.packtpub.com/?utm_source=github). It contains all the supporting project files necessary to work through the book from start to finish.
 ## About the Book
